@@ -57,9 +57,9 @@ def do_test(test, normalize, result_counts):
             print_test_header(test['section'], test['example'], test['start_line'], test['end_line'])
             out(test['markdown'] + '\n')
             if unicode_error:
-                out("Unicode error: " + str(unicode_error) + '\n')
-                out("Expected: " + repr(expected_html) + '\n')
-                out("Got:      " + repr(actual_html) + '\n')
+                out(f'Unicode error: {str(unicode_error)}' + '\n')
+                out(f'Expected: {repr(expected_html)}' + '\n')
+                out(f'Got:      {repr(actual_html)}' + '\n')
             else:
                 expected_html_lines = expected_html.splitlines(True)
                 actual_html_lines = actual_html.splitlines(True)
@@ -89,13 +89,13 @@ def get_tests(specfile):
 
     with open(specfile, 'r', encoding='utf-8', newline='\n') as specf:
         for line in specf:
-            line_number = line_number + 1
+            line_number += 1
             l = line.strip()
             if l == "`" * 32 + " example":
                 state = 1
             elif state == 2 and l == "`" * 32:
                 state = 0
-                example_number = example_number + 1
+                example_number += 1
                 end_line = line_number
                 tests.append({
                     "markdown":''.join(markdown_lines).replace('→',"\t"),

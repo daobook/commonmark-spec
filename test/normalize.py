@@ -28,7 +28,7 @@ class MyHTMLParser(HTMLParser):
         self.output = ""
         self.last_tag = ""
     def handle_data(self, data):
-        after_tag = self.last == "endtag" or self.last == "starttag"
+        after_tag = self.last in ["endtag", "starttag"]
         after_block_tag = after_tag and self.is_block_tag(self.last_tag)
         if after_tag and self.last_tag == "br":
             data = data.lstrip('\n')
@@ -46,7 +46,7 @@ class MyHTMLParser(HTMLParser):
             self.in_pre = False
         elif self.is_block_tag(tag):
             self.output = self.output.rstrip()
-        self.output += "</" + tag + ">"
+        self.output += f'</{tag}>'
         self.last_tag = tag
         self.last = "endtag"
     def handle_starttag(self, tag, attrs):
@@ -54,14 +54,14 @@ class MyHTMLParser(HTMLParser):
             self.in_pre = True
         if self.is_block_tag(tag):
             self.output = self.output.rstrip()
-        self.output += "<" + tag
+        self.output += f'<{tag}'
         # For now we don't strip out 'extra' attributes, because of
         # raw HTML test cases.
         # attrs = filter(lambda attr: attr[0] in significant_attrs, attrs)
         if attrs:
             attrs.sort()
             for (k,v) in attrs:
-                self.output += " " + k
+                self.output += f' {k}'
                 if v in ['href','src']:
                     self.output += ("=" + '"' +
                             urllib.quote(urllib.unquote(v), safe='/') + '"')
@@ -76,33 +76,30 @@ class MyHTMLParser(HTMLParser):
         self.last_tag = tag
         self.last = "endtag"
     def handle_comment(self, data):
-        self.output += '<!--' + data + '-->'
+        self.output += f'<!--{data}-->'
         self.last = "comment"
     def handle_decl(self, data):
-        self.output += '<!' + data + '>'
+        self.output += f'<!{data}>'
         self.last = "decl"
     def unknown_decl(self, data):
-        self.output += '<!' + data + '>'
+        self.output += f'<!{data}>'
         self.last = "decl"
     def handle_pi(self,data):
-        self.output += '<?' + data + '>'
+        self.output += f'<?{data}>'
         self.last = "pi"
     def handle_entityref(self, name):
         try:
             c = chr(name2codepoint[name])
         except KeyError:
             c = None
-        self.output_char(c, '&' + name + ';')
+        self.output_char(c, f'&{name};')
         self.last = "ref"
     def handle_charref(self, name):
         try:
-            if name.startswith("x"):
-                c = chr(int(name[1:], 16))
-            else:
-                c = chr(int(name))
+            c = chr(int(name[1:], 16)) if name.startswith("x") else chr(int(name))
         except ValueError:
                 c = None
-        self.output_char(c, '&' + name + ';')
+        self.output_char(c, f'&{name};')
         self.last = "ref"
     # Helpers.
     def output_char(self, c, fallback):
@@ -114,7 +111,7 @@ class MyHTMLParser(HTMLParser):
             self.output += "&amp;"
         elif c == '"':
             self.output += "&quot;"
-        elif c == None:
+        elif c is None:
             self.output += fallback
         else:
             self.output += c
@@ -190,5 +187,5 @@ def normalize_html(html):
         parser.close()
         return parser.output
     except HTMLParseError as e:
-        sys.stderr.write("Normalization error: " + e.msg + "\n")
+        sys.stderr.write(f'Normalization error: {e.msg}' + "\n")
         return html  # on error, return unnormalized HTML
